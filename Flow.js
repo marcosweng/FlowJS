@@ -46,7 +46,6 @@ var $F = (function() {
     };
 
 
-
     /**
      * 执行下一步骤
      * @param  action
