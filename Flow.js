@@ -1,5 +1,6 @@
-var Flow = (function() {
+var $F = (function() {
     var FlowObj = function() {},
+        FlowFactory = function() {},
         parseArgs = function(args) {
             if (args.length === 0) {
                 //抛出异常
@@ -15,10 +16,10 @@ var Flow = (function() {
                     return args[0]
                 }
             } else {
-            	if (typeof args[0] !== "function") {
-					//抛出异常
-	                throw "action is not a function";
-            	}
+                if (typeof args[0] !== "function") {
+                    //抛出异常
+                    throw "action is not a function";
+                }
                 return {
                     "action": args[0],
                     "ack": args[1],
@@ -36,14 +37,18 @@ var Flow = (function() {
      * 		}
      * @return {[type]}
      */
-    FlowObj.prototype.of = function(context) {
-        this.data = context ? context.data : undefinedl
-        this.actions = [];
-        this.step = -1;
-        return this;
+    FlowFactory.of = function(context) {
+        var flow = new FlowObj();
+        flow.data = context ? context.data : undefined;
+        flow.actions = [];
+        flow.step = -1;
+        return flow;
     };
 
+
+
     /**
+     * 执行下一步骤
      * @param  action
      * 	两种类型：
      * 		arguments->只包含了action内容，即多个函数
@@ -55,26 +60,48 @@ var Flow = (function() {
      * 			"fail":function(data,e)
      * 		}
      *
-     * 		
+     *  
      * @return {[type]}
      */
     FlowObj.prototype.next = function() {
-    	var config = parseArgs(arguments);
+        var config = parseArgs(arguments);
         this.actions.push(config);
         return this;
     };
 
+    /**
+     * [prev 执行上一步骤]
+     * @return {[type]} [description]
+     */
     FlowObj.prototype.prev = function() {
-    	
-        this.actions.splice(this.actions.length, 0, action);
+        if (this.actions.length < 2) {
+            throw "can't not found last step,please check it!";
+        }
+        this.step--;
         return this;
     };
 
+    /**
+     * [done 执行操作]
+     * @return {Function} [description]
+     */
     FlowObj.prototype.done = function() {
-        for (var i = 0; i <= this.actions.length; i++) {
-            actions[i].
+    	debugger;
+        var inputData = this.data;
+        for (var i = 0; i < this.actions.length; i++) {
+            try {
+                inputData = this.actions[i].action.call(this, inputData);
+                if (typeof this.actions[i].ack === "function") {
+                    this.actions[i].ack.call(this, inputData);
+                }
+            } catch (e) {
+                if (typeof this.actions[i].fail === "function") {
+                    this.actions[i].fail.call(this, inputData);
+                }
+                break;
+            }
         }
     };
 
-    return FlowObj;
+    return FlowFactory;
 })();
